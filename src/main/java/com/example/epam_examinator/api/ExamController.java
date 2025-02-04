@@ -14,7 +14,6 @@ import org.springframework.web.client.RestTemplate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
 
 @RestController
 @RequestMapping("exam")
@@ -36,17 +35,14 @@ public class ExamController {
                 .map(Arrays::asList)
                 .map(Section::new)
                 .toList();
-        System.err.println(sections);
         return new Exam("EXAM", sections);
     }
 
     private String getUrl(Map.Entry<String, Integer> entry) {
-        AtomicReference<String> url = new AtomicReference<>("");
-        discoveryClient.getInstances(entry.getKey()).forEach(
-                serviceInstance -> {
-                    url.set(serviceInstance.getUri() + "/api/questions/" + entry.getValue());
-                }
-        );
-        return url.get();
+        return discoveryClient.getInstances(entry.getKey())
+                .stream()
+                .findFirst()
+                .map(serviceInstance -> serviceInstance.getUri() + "/api/questions/" + entry.getValue())
+                .orElse("");
     }
 }
